@@ -86,7 +86,7 @@ it.each([
 ])(
   "answers $name from the app-server with the strict cleared result",
   async ({ result, cleared }) => {
-    startBridge(result === null ? undefined : { result });
+    startBridge({ result });
 
     const response = await request(1, "thread/goal/clear");
 

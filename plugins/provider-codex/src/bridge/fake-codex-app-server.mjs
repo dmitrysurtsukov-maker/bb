@@ -791,7 +791,13 @@ async function handleRequest(message) {
         );
         return;
       }
-      respond(id, script?.goalClear?.result ?? {});
+      respond(
+        id,
+        script?.goalClear !== undefined &&
+          Object.hasOwn(script.goalClear, "result")
+          ? script.goalClear.result
+          : {},
+      );
       return;
     default:
       respondError(id, -32601, `Unknown method "${method}"`);
