@@ -2410,6 +2410,30 @@ async function handleThreadMaintenance(
   }
 }
 
+const codexThreadGoalClearResultSchema = z.object({ cleared: z.boolean() });
+
+async function handleThreadGoalClear(
+  id: string | number,
+  params: ThreadRefParamsShape,
+): Promise<void> {
+  let nativeResult: unknown;
+  try {
+    nativeResult = await withChildForThread(params.threadId, (connection) =>
+      connection.request({
+        method: "thread/goal/clear",
+        params: { threadId: params.providerThreadId },
+        resultSchema: ignoredChildResultSchema,
+        timeoutMs: CHILD_REQUEST_TIMEOUT_MS,
+      }),
+    );
+  } catch (error) {
+    rejectWithCodexError(id, error);
+    return;
+  }
+  const parsed = codexThreadGoalClearResultSchema.safeParse(nativeResult);
+  sendResult(id, { cleared: parsed.success ? parsed.data.cleared : true });
+}
+
 function rejectWithCodexError(id: string | number, error: unknown): void {
   const message = describeCodexLaunchError(error);
   const recovery = archivedSessionHint(message);
@@ -2595,10 +2619,7 @@ async function handleRequest(
       );
       break;
     case "thread/goal/clear":
-      await handleThreadMaintenance(request.id, request.params, {
-        method: "thread/goal/clear",
-        params: { threadId: request.params.providerThreadId },
-      });
+      await handleThreadGoalClear(request.id, request.params);
       break;
     case "skills/configure":
       await handleSkillsConfigure(request.id, request.params);
